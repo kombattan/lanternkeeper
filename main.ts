@@ -1,18 +1,17 @@
-// A working best-game-01 entry (Node 22, standard library only): the game is this directory's
-// game/ folder, plain static files a desktop browser loads offline (game/index.html and its ES
-// modules, no library and no network request), and the program hands it in. It copies game/ and
-// screenshots/ from beside this file to /output and writes /output/dossier.json, the summary the
-// judge reads, with the vendored make.fun library. A starting point, not a winner: Block Dodger, a
-// plain 2D canvas game where a paddle dodges falling blocks and catches coins, with a title screen,
-// score, lives and levels, game over and restart, flat colours and no sound. Build your own game
-// (any genre, any library you vendor under game/, or none), put your 3 or 4 PNG or JPEG screenshots
-// in screenshots/ (the first by name is the cover) and run it.
+// Lanternkeeper's hand-in program (Node 22, standard library only).
+// The game itself is the game/ folder beside this file: plain static files a
+// desktop browser loads fully offline. This program copies game/ and
+// screenshots/ into the output directory and writes dossier.json there with
+// the kit's vendored buildDossier, then verifies what it handed in — file
+// and byte counts for the game tree and the size of every screenshot — and
+// prints a one-line summary, so a bad hand-in is loud in the run log instead
+// of silent at the gate.
 //
-// Serve it locally with `node serve.ts`, then open http://localhost:8080.
+// Serve the game locally with `node serve.ts`, then open http://localhost:8080.
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-game.ts';
@@ -38,4 +37,35 @@ writeFileSync(
     game_max_bytes: 50331648,
     game_path_max_bytes: 1000,
   }),
+);
+
+// Lanternkeeper's own post-hand-in verification: walk the copied game tree
+// and the screenshots, and report their shape. This only reads the output;
+// the dossier above is the entry, byte for byte what buildDossier wrote.
+function survey(dir) {
+  let files = 0;
+  let bytes = 0;
+  for (const name of readdirSync(dir)) {
+    const path = join(dir, name);
+    const stats = statSync(path);
+    if (stats.isDirectory()) {
+      const inner = survey(path);
+      files += inner.files;
+      bytes += inner.bytes;
+    } else {
+      files += 1;
+      bytes += stats.size;
+    }
+  }
+  return { files, bytes };
+}
+
+const gameSurvey = survey(join(out, 'game'));
+const shotDir = join(out, 'screenshots');
+const shotSizes = existsSync(shotDir)
+  ? readdirSync(shotDir).map((name) => `${name} ${(statSync(join(shotDir, name)).size / 1024).toFixed(1)} KiB`)
+  : [];
+console.log(
+  `lanternkeeper: handed in ${gameSurvey.files} game files (${gameSurvey.bytes} bytes), ` +
+    `${shotSizes.length} screenshots [${shotSizes.join(', ')}], dossier ${statSync(join(out, 'dossier.json')).size} bytes`,
 );
