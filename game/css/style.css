@@ -1,0 +1,41 @@
+/* Lanternkeeper's page chrome: a dark room for a game about light. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #05070f;
+  color: #8b98a9;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.wrap {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 18px 10px;
+}
+
+canvas#game {
+  width: min(96vw, 1280px);
+  height: auto;
+  aspect-ratio: 1280 / 720;
+  background: #11182b;
+  border: 1px solid #232c38;
+  border-radius: 6px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.65), 0 0 90px rgba(255, 150, 50, 0.06);
+}
+
+.hint {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
